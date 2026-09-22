@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { useAuth } from '../contexts/AuthContext'
 import { LOCATION_LABELS, type InventoryItemWithProduct } from '../lib/types'
 
 function daysUntil(dateStr: string) {
@@ -23,10 +24,12 @@ function ExpiryBadge({ expiryDate }: { expiryDate: string | null }) {
 
 export function Inventory() {
   const { currentHousehold } = useHousehold()
+  const { user } = useAuth()
   const [items, setItems] = useState<InventoryItemWithProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [locationFilter, setLocationFilter] = useState<string>('tutti')
+  const [consuming, setConsuming] = useState<string | null>(null)
 
   useEffect(() => {
     if (!currentHousehold) return
@@ -67,6 +70,27 @@ export function Inventory() {
       supabase.removeChannel(channel)
     }
   }, [currentHousehold])
+
+  async function handleQuickConsume(e: MouseEvent, item: InventoryItemWithProduct) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (item.quantity <= 0 || consuming) return
+
+    setConsuming(item.id)
+    const newQty = Math.max(0, item.quantity - 1)
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, quantity: newQty } : i)))
+
+    await supabase.from('inventory_items').update({ quantity: newQty }).eq('id', item.id)
+    await supabase.from('inventory_movements').insert({
+      household_id: item.household_id,
+      product_id: item.product_id,
+      type: 'consumed',
+      quantity: 1,
+      unit: item.unit,
+      created_by: user?.id ?? null,
+    })
+    setConsuming(null)
+  }
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -155,6 +179,14 @@ export function Inventory() {
                   </p>
                 </div>
                 <ExpiryBadge expiryDate={item.expiry_date} />
+                <button
+                  onClick={(e) => handleQuickConsume(e, item)}
+                  disabled={item.quantity <= 0 || consuming === item.id}
+                  title="Togli 1 dall'inventario"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-40"
+                >
+                  −1
+                </button>
               </Link>
             </li>
           ))}
