@@ -6,6 +6,7 @@ import { Login } from './pages/Login'
 import { Onboarding } from './pages/Onboarding'
 import { Inventory } from './pages/Inventory'
 import { AddItem } from './pages/AddItem'
+import { ReceiptScan } from './pages/ReceiptScan'
 import { ItemDetail } from './pages/ItemDetail'
 import { ShoppingList } from './pages/ShoppingList'
 import { Recipes } from './pages/Recipes'
@@ -59,6 +60,7 @@ function HouseholdGate() {
         <Route path="impostazioni" element={<Settings />} />
       </Route>
       <Route path="aggiungi" element={<AddItem />} />
+      <Route path="scontrino" element={<ReceiptScan />} />
       <Route path="articolo/:id" element={<ItemDetail />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -159,10 +159,17 @@ export function AddItem() {
 
       <button
         onClick={() => setScanning(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-green-400 bg-green-50 py-4 text-sm font-medium text-green-700 hover:bg-green-100"
+        className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-green-400 bg-green-50 py-4 text-sm font-medium text-green-700 hover:bg-green-100"
       >
         📷 Scannerizza codice a barre
       </button>
+
+      <Link
+        to="/scontrino"
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 py-3 text-sm font-medium text-blue-700 hover:bg-blue-100"
+      >
+        📄 Oppure leggi uno scontrino (più prodotti insieme)
+      </Link>
 
       {lookingUp && <p className="mb-3 text-sm text-gray-500">Ricerca prodotto...</p>}
       {lookupError && <p className="mb-3 text-sm text-orange-600">{lookupError}</p>}

@@ -83,11 +83,11 @@ export function Inventory() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">{currentHousehold.name}</h1>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h1 className="min-w-0 truncate text-xl font-semibold text-gray-900">{currentHousehold.name}</h1>
         <Link
           to="/aggiungi"
-          className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          className="shrink-0 rounded-full bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700"
         >
           + Aggiungi
         </Link>

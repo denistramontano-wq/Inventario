@@ -9,4 +9,16 @@ body,
 body {
   background-color: #f9fafb;
   -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* iOS Safari zooma automaticamente la pagina quando il font di un campo è
+   sotto i 16px: forziamo 16px sui campi per evitare lo zoom/scatto layout
+   quando l'utente tocca un input su schermo piccolo. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

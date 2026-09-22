@@ -21,13 +21,13 @@ export function Layout() {
             to={tab.to}
             end={tab.end}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium ${
+              `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-center text-[10px] leading-tight font-medium ${
                 isActive ? 'text-green-600' : 'text-gray-500'
               }`
             }
           >
-            <span className="text-lg">{tab.icon}</span>
-            {tab.label}
+            <span className="text-lg leading-none">{tab.icon}</span>
+            <span className="w-full truncate">{tab.label}</span>
           </NavLink>
         ))}
       </nav>

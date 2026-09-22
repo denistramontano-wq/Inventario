@@ -39,7 +39,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <div className="flex items-center justify-between p-4 text-white">
+      <div className="flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] text-white">
         <span className="font-medium">Inquadra il codice a barre</span>
         <button
           onClick={onClose}
