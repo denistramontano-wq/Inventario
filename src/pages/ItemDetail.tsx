@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { LOCATIONS, LOCATION_LABELS, UNITS, type InventoryItemWithProduct, type InventoryMovement } from '../lib/types'
 import { CURRENCIES, formatMoney } from '../lib/currency'
+import { uploadProductImage } from '../lib/productImage'
 
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>()
@@ -13,6 +14,7 @@ export function ItemDetail() {
   const [item, setItem] = useState<InventoryItemWithProduct | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [purchaseHistory, setPurchaseHistory] = useState<InventoryMovement[]>([])
 
   useEffect(() => {
@@ -98,6 +100,18 @@ export function ItemDetail() {
     navigate('/')
   }
 
+  async function handlePhotoChange(file: File) {
+    if (!item) return
+    setUploadingPhoto(true)
+    try {
+      const url = await uploadProductImage(file)
+      await supabase.from('products').update({ image_url: url }).eq('id', item.product_id)
+      setItem({ ...item, product: { ...item.product, image_url: url } })
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   if (loading) return <p className="py-10 text-center text-sm text-gray-400">Caricamento...</p>
   if (!item) return <p className="py-10 text-center text-sm text-gray-400">Prodotto non trovato</p>
 
@@ -108,11 +122,27 @@ export function ItemDetail() {
       </button>
 
       <div className="mb-4 flex items-center gap-3">
-        {item.product.image_url ? (
-          <img src={item.product.image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-2xl">🥫</div>
-        )}
+        <label className="relative block h-16 w-16 shrink-0 cursor-pointer">
+          {item.product.image_url ? (
+            <img src={item.product.image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-2xl">🥫</div>
+          )}
+          <span className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow">
+            {uploadingPhoto ? '…' : '📷'}
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            disabled={uploadingPhoto}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handlePhotoChange(file)
+            }}
+          />
+        </label>
         <div>
           <h1 className="text-lg font-semibold text-gray-900">{item.product.name}</h1>
           {item.product.brand && <p className="text-sm text-gray-500">{item.product.brand}</p>}
