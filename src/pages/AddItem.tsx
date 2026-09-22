@@ -82,17 +82,33 @@ export function AddItem() {
     try {
       let productId: string
 
-      const existingByBarcode = barcode
-        ? await supabase.from('products').select('id').eq('barcode', barcode).maybeSingle()
-        : { data: null }
-
-      if (existingByBarcode.data) {
-        productId = existingByBarcode.data.id
+      if (barcode) {
+        // upsert su barcode: se due dispositivi scansionano lo stesso nuovo
+        // barcode nello stesso istante, evita un errore di chiave duplicata
+        // (constraint UNIQUE su products.barcode) e converge sulla stessa riga.
+        const { data: product, error: productError } = await supabase
+          .from('products')
+          .upsert(
+            {
+              barcode,
+              name: name.trim(),
+              brand: brand.trim() || null,
+              image_url: imageUrl,
+              unit,
+              nutrition: nutrition ?? null,
+              source,
+            },
+            { onConflict: 'barcode' },
+          )
+          .select('id')
+          .single()
+        if (productError) throw productError
+        productId = product.id
       } else {
         const { data: product, error: productError } = await supabase
           .from('products')
           .insert({
-            barcode: barcode || null,
+            barcode: null,
             name: name.trim(),
             brand: brand.trim() || null,
             image_url: imageUrl,

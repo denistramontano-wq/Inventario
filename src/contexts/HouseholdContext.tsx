@@ -18,6 +18,16 @@ const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
 const STORAGE_KEY = 'inventario.currentHouseholdId'
 
+// Alfabeto senza caratteri ambigui (0/O, 1/I/L)
+const INVITE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+const INVITE_CODE_LENGTH = 10
+
+function generateInviteCode() {
+  const bytes = new Uint8Array(INVITE_CODE_LENGTH)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => INVITE_CODE_ALPHABET[b % INVITE_CODE_ALPHABET.length]).join('')
+}
+
 export function HouseholdProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [households, setHouseholds] = useState<Household[]>([])
@@ -75,12 +85,20 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   async function createInviteCode() {
     if (!currentHouseholdId) return { code: null, error: 'Nessun nucleo familiare selezionato' }
-    const code = Math.random().toString(36).slice(2, 8).toUpperCase()
-    const { error } = await supabase
-      .from('household_invites')
-      .insert({ household_id: currentHouseholdId, code })
-    if (error) return { code: null, error: error.message }
-    return { code, error: null }
+
+    // Codice lungo e generato con un CSPRNG: un codice invito concede accesso
+    // completo all'inventario, quindi deve essere impraticabile da indovinare
+    // per tentativi (32^10 combinazioni, alfabeto senza caratteri ambigui).
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const code = generateInviteCode()
+      const { error } = await supabase
+        .from('household_invites')
+        .insert({ household_id: currentHouseholdId, code })
+      if (!error) return { code, error: null }
+      // 23505 = unique_violation: collisione estremamente improbabile, riprova
+      if (error.code !== '23505') return { code: null, error: error.message }
+    }
+    return { code: null, error: 'Impossibile generare un codice invito univoco, riprova' }
   }
 
   const currentHousehold = households.find((h) => h.id === currentHouseholdId) ?? null
