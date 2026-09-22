@@ -10,6 +10,7 @@ import { ReceiptScan } from './pages/ReceiptScan'
 import { ItemDetail } from './pages/ItemDetail'
 import { ShoppingList } from './pages/ShoppingList'
 import { Recipes } from './pages/Recipes'
+import { AddRecipe } from './pages/AddRecipe'
 import { Expenses } from './pages/Expenses'
 import { Settings } from './pages/Settings'
 
@@ -61,6 +62,7 @@ function HouseholdGate() {
       </Route>
       <Route path="aggiungi" element={<AddItem />} />
       <Route path="scontrino" element={<ReceiptScan />} />
+      <Route path="ricette/nuova" element={<AddRecipe />} />
       <Route path="articolo/:id" element={<ItemDetail />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
 import type { Recipe, RecipeIngredient } from '../lib/types'
@@ -82,7 +83,15 @@ export function Recipes() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-6">
-      <h1 className="mb-1 text-xl font-semibold text-gray-900">Ricette</h1>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <h1 className="min-w-0 truncate text-xl font-semibold text-gray-900">Ricette</h1>
+        <Link
+          to="/ricette/nuova"
+          className="shrink-0 rounded-full bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700"
+        >
+          + Nuova
+        </Link>
+      </div>
       <p className="mb-4 text-sm text-gray-500">In base a quello che hai in casa</p>
 
       <label className="mb-4 flex items-center gap-2 text-sm text-gray-600">
