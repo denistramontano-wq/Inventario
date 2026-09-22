@@ -12,13 +12,8 @@ export type RecipeIngredient = Tables<'recipe_ingredients'>
 export type InventoryItemWithProduct = InventoryItem & { product: Product }
 export type ShoppingListItemWithProduct = ShoppingListItem & { product: Product | null }
 
-export const LOCATIONS = ['dispensa', 'frigo', 'freezer', 'cantina', 'altro'] as const
+// Le posizioni sono ora personalizzabili per nucleo familiare (vedi
+// CatalogContext / household_locations), non più un elenco fisso pensato
+// solo per il cibo. UNITS resta fisso: sono unità di misura, non cambiano
+// da nucleo a nucleo.
 export const UNITS = ['pz', 'g', 'kg', 'ml', 'l'] as const
-
-export const LOCATION_LABELS: Record<string, string> = {
-  dispensa: 'Dispensa',
-  frigo: 'Frigo',
-  freezer: 'Freezer',
-  cantina: 'Cantina',
-  altro: 'Altro',
-}

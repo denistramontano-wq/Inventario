@@ -1,7 +1,6 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatMoney } from './currency'
-import { LOCATION_LABELS } from './types'
 import type { Household, InventoryItemWithProduct } from './types'
 
 const GREEN: [number, number, number] = [22, 163, 74]
@@ -80,13 +79,15 @@ export function generateInventoryPdf(household: Household, items: InventoryItemW
   y += 6
 
   // --- Tabelle per posizione ---
-  const locationOrder = ['dispensa', 'frigo', 'freezer', 'cantina', 'altro']
+  // Le posizioni sono personalizzabili per nucleo, quindi raggruppiamo in
+  // base a quelle effettivamente usate negli articoli, in ordine alfabetico.
   const byLocation = new Map<string, InventoryItemWithProduct[]>()
   for (const item of items) {
-    const loc = item.location ?? 'altro'
+    const loc = item.location ?? 'Altro'
     if (!byLocation.has(loc)) byLocation.set(loc, [])
     byLocation.get(loc)!.push(item)
   }
+  const locationOrder = [...byLocation.keys()].sort((a, b) => a.localeCompare(b))
 
   for (const loc of locationOrder) {
     const locItems = byLocation.get(loc)
@@ -102,7 +103,7 @@ export function generateInventoryPdf(household: Household, items: InventoryItemW
     doc.setTextColor(...GREEN)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(12)
-    doc.text(LOCATION_LABELS[loc] ?? loc, margin, y)
+    doc.text(loc, margin, y)
     y += 4
 
     autoTable(doc, {

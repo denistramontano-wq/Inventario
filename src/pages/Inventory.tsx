@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { useCatalog } from '../contexts/CatalogContext'
 import { useAuth } from '../contexts/AuthContext'
-import { LOCATION_LABELS, type InventoryItemWithProduct } from '../lib/types'
+import type { InventoryItemWithProduct } from '../lib/types'
 
 function daysUntil(dateStr: string) {
   const today = new Date()
@@ -24,6 +25,7 @@ function ExpiryBadge({ expiryDate }: { expiryDate: string | null }) {
 
 export function Inventory() {
   const { currentHousehold } = useHousehold()
+  const { locations } = useCatalog()
   const { user } = useAuth()
   const [items, setItems] = useState<InventoryItemWithProduct[]>([])
   const [loading, setLoading] = useState(true)
@@ -140,7 +142,7 @@ export function Inventory() {
       />
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-        {['tutti', 'dispensa', 'frigo', 'freezer', 'cantina', 'altro'].map((loc) => (
+        {['tutti', ...locations.map((l) => l.name)].map((loc) => (
           <button
             key={loc}
             onClick={() => setLocationFilter(loc)}
@@ -148,7 +150,7 @@ export function Inventory() {
               locationFilter === loc ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'
             }`}
           >
-            {loc === 'tutti' ? 'Tutti' : LOCATION_LABELS[loc]}
+            {loc === 'tutti' ? 'Tutti' : loc}
           </button>
         ))}
       </div>
@@ -175,7 +177,7 @@ export function Inventory() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-gray-900">{item.product.name}</p>
                   <p className="text-xs text-gray-500">
-                    {item.quantity} {item.unit} · {LOCATION_LABELS[item.location ?? 'altro']}
+                    {item.quantity} {item.unit} · {item.location ?? 'Altro'}
                   </p>
                 </div>
                 <ExpiryBadge expiryDate={item.expiry_date} />

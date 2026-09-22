@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { useCatalog } from '../contexts/CatalogContext'
 import { supabase } from '../lib/supabase'
 import { CURRENCIES } from '../lib/currency'
 import { toCsv, downloadCsv } from '../lib/csvExport'
-import { LOCATION_LABELS, type InventoryItemWithProduct, type InventoryMovement, type Product } from '../lib/types'
+import type { InventoryItemWithProduct, InventoryMovement, Product } from '../lib/types'
 
 type ExportJob = 'pdf' | 'csv-inventory' | 'csv-movements' | null
 
@@ -18,12 +19,16 @@ export function Settings() {
     updateDefaultCurrency,
     resetExpenseStats,
   } = useHousehold()
+  const { locations, categories, addLocation, removeLocation, addCategory, removeCategory } = useCatalog()
   const [invite, setInvite] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [savingCurrency, setSavingCurrency] = useState(false)
   const [exporting, setExporting] = useState<ExportJob>(null)
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [newLocation, setNewLocation] = useState('')
+  const [newCategory, setNewCategory] = useState('')
+  const [catalogError, setCatalogError] = useState<string | null>(null)
 
   async function handleInvite() {
     setError(null)
@@ -43,6 +48,22 @@ export function Settings() {
     await resetExpenseStats()
     setResetting(false)
     setConfirmingReset(false)
+  }
+
+  async function handleAddLocation(e: FormEvent) {
+    e.preventDefault()
+    setCatalogError(null)
+    const result = await addLocation(newLocation)
+    if (result.error) setCatalogError(result.error)
+    else setNewLocation('')
+  }
+
+  async function handleAddCategory(e: FormEvent) {
+    e.preventDefault()
+    setCatalogError(null)
+    const result = await addCategory(newCategory)
+    if (result.error) setCatalogError(result.error)
+    else setNewCategory('')
   }
 
   async function fetchInventory(): Promise<InventoryItemWithProduct[]> {
@@ -79,7 +100,7 @@ export function Settings() {
           i.product.category,
           i.quantity,
           i.unit,
-          LOCATION_LABELS[i.location ?? 'altro'] ?? i.location,
+          i.location,
           i.expiry_date,
           i.price,
           i.currency,
@@ -166,6 +187,79 @@ export function Settings() {
           Usata come predefinita quando aggiungi un prodotto — puoi comunque scegliere una valuta diversa per ogni
           singolo articolo.
         </p>
+      </div>
+
+      <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
+        <p className="mb-2 text-xs text-gray-500">Posizioni</p>
+        <p className="mb-2 text-xs text-gray-400">
+          Dove tieni le cose in casa: non solo cibo, va bene anche per prodotti vari (es. Bagno, Garage...).
+        </p>
+        <ul className="mb-2 flex flex-wrap gap-2">
+          {locations.map((loc) => (
+            <li
+              key={loc.id}
+              className="flex items-center gap-1 rounded-full bg-gray-100 py-1 pr-1 pl-3 text-xs text-gray-700"
+            >
+              {loc.name}
+              <button
+                onClick={() => removeLocation(loc.id)}
+                disabled={locations.length <= 1}
+                title={locations.length <= 1 ? 'Deve restarne almeno una' : 'Rimuovi'}
+                className="flex h-5 w-5 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-red-500 disabled:opacity-30"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form onSubmit={handleAddLocation} className="flex gap-2">
+          <input
+            value={newLocation}
+            onChange={(e) => setNewLocation(e.target.value)}
+            placeholder="Nuova posizione (es. Garage)"
+            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+          <button type="submit" className="shrink-0 rounded-lg bg-gray-800 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">
+            Aggiungi
+          </button>
+        </form>
+      </div>
+
+      <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
+        <p className="mb-2 text-xs text-gray-500">Categorie</p>
+        <p className="mb-2 text-xs text-gray-400">
+          Che tipo di prodotto è: alimentare, pulizia, igiene personale... utile per tenere ordine tra cibo e non.
+        </p>
+        <ul className="mb-2 flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <li
+              key={cat.id}
+              className="flex items-center gap-1 rounded-full bg-gray-100 py-1 pr-1 pl-3 text-xs text-gray-700"
+            >
+              {cat.name}
+              <button
+                onClick={() => removeCategory(cat.id)}
+                disabled={categories.length <= 1}
+                title={categories.length <= 1 ? 'Deve restarne almeno una' : 'Rimuovi'}
+                className="flex h-5 w-5 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-red-500 disabled:opacity-30"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form onSubmit={handleAddCategory} className="flex gap-2">
+          <input
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Nuova categoria (es. Cartoleria)"
+            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+          <button type="submit" className="shrink-0 rounded-lg bg-gray-800 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">
+            Aggiungi
+          </button>
+        </form>
+        {catalogError && <p className="mt-2 text-sm text-red-600">{catalogError}</p>}
       </div>
 
       <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">

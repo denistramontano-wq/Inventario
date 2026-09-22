@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { useCatalog } from '../contexts/CatalogContext'
 import { useAuth } from '../contexts/AuthContext'
 import { lookupBarcode } from '../lib/openfoodfacts'
 import { uploadProductImage } from '../lib/productImage'
@@ -9,12 +10,13 @@ import { uploadProductImage } from '../lib/productImage'
 const BarcodeScanner = lazy(() =>
   import('../components/BarcodeScanner').then((m) => ({ default: m.BarcodeScanner })),
 )
-import { LOCATIONS, LOCATION_LABELS, UNITS } from '../lib/types'
+import { UNITS } from '../lib/types'
 import { CURRENCIES } from '../lib/currency'
 import type { Json } from '../lib/database.types'
 
 export function AddItem() {
   const { currentHousehold } = useHousehold()
+  const { locations, categories } = useCatalog()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -31,10 +33,11 @@ export function AddItem() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [nutrition, setNutrition] = useState<Json | null>(null)
   const [source, setSource] = useState<'openfoodfacts' | 'manual'>('manual')
+  const [category, setCategory] = useState('')
 
   const [quantity, setQuantity] = useState('1')
   const [unit, setUnit] = useState<(typeof UNITS)[number]>('pz')
-  const [location, setLocation] = useState<(typeof LOCATIONS)[number]>('dispensa')
+  const [location, setLocation] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState(currentHousehold?.default_currency ?? 'EUR')
@@ -46,6 +49,10 @@ export function AddItem() {
   // OpenFoodFacts): finché resta true, salvare crea una riga nuova nel
   // catalogo prodotti condiviso, invece di riusarne una esistente.
   const [isNewProduct, setIsNewProduct] = useState(true)
+
+  useEffect(() => {
+    if (!location && locations.length > 0) setLocation(locations[0].name)
+  }, [locations, location])
 
   async function handleBarcodeDetected(code: string) {
     setScanning(false)
@@ -62,6 +69,7 @@ export function AddItem() {
         setUnit((existing.data.unit as (typeof UNITS)[number]) ?? 'pz')
         setNutrition(existing.data.nutrition)
         setSource(existing.data.source as 'openfoodfacts' | 'manual')
+        setCategory(existing.data.category ?? '')
         setIsNewProduct(false)
       } else {
         const off = await lookupBarcode(code)
@@ -72,6 +80,7 @@ export function AddItem() {
           setUnit(off.unit)
           setNutrition(off.nutrition as Json)
           setSource('openfoodfacts')
+          setCategory('Alimentare')
           setIsNewProduct(false)
         } else {
           setLookupError(
@@ -126,6 +135,7 @@ export function AddItem() {
               brand: brand.trim() || null,
               image_url: finalImageUrl,
               unit,
+              category: category || null,
               nutrition: nutrition ?? null,
               source,
             },
@@ -157,6 +167,7 @@ export function AddItem() {
               brand: brand.trim() || null,
               image_url: finalImageUrl,
               unit,
+              category: category || null,
               nutrition: nutrition ?? null,
               source,
             })
@@ -310,20 +321,40 @@ export function AddItem() {
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Posizione</label>
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value as (typeof LOCATIONS)[number])}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
-          >
-            {LOCATIONS.map((loc) => (
-              <option key={loc} value={loc}>
-                {LOCATION_LABELS[loc]}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <label className="mb-1 block text-xs font-medium text-gray-600">Posizione</label>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+            >
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.name}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="min-w-0">
+            <label className="mb-1 block text-xs font-medium text-gray-600">Categoria</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+            >
+              <option value="">— Nessuna —</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+        <p className="-mt-2 text-xs text-gray-400">
+          Non trovi quella giusta? Aggiungine di nuove da Impostazioni → Posizioni e categorie.
+        </p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="min-w-0">

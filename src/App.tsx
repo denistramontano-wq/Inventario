@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { HouseholdProvider, useHousehold } from './contexts/HouseholdContext'
+import { CatalogProvider } from './contexts/CatalogContext'
 import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
 import { Onboarding } from './pages/Onboarding'
@@ -31,7 +32,9 @@ function AppRoutes() {
 
   return (
     <HouseholdProvider>
-      <HouseholdGate />
+      <CatalogProvider>
+        <HouseholdGate />
+      </CatalogProvider>
     </HouseholdProvider>
   )
 }

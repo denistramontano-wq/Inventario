@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { useCatalog } from '../contexts/CatalogContext'
 import { useAuth } from '../contexts/AuthContext'
 import { parseReceiptText } from '../lib/receiptParser'
-import { LOCATIONS, LOCATION_LABELS } from '../lib/types'
 import { CURRENCIES, formatMoney } from '../lib/currency'
 
 interface ReviewItem {
@@ -19,6 +19,7 @@ type Status = 'idle' | 'processing' | 'review' | 'saving' | 'error'
 
 export function ReceiptScan() {
   const { currentHousehold } = useHousehold()
+  const { locations } = useCatalog()
   const { user } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -27,9 +28,13 @@ export function ReceiptScan() {
   const [progress, setProgress] = useState(0)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [items, setItems] = useState<ReviewItem[]>([])
-  const [location, setLocation] = useState<(typeof LOCATIONS)[number]>('dispensa')
+  const [location, setLocation] = useState('')
   const [currency, setCurrency] = useState(currentHousehold?.default_currency ?? 'EUR')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!location && locations.length > 0) setLocation(locations[0].name)
+  }, [locations, location])
 
   async function handleFile(file: File) {
     setError(null)
@@ -207,12 +212,12 @@ export function ReceiptScan() {
               <label className="mb-1 block text-xs font-medium text-gray-600">Dove metti questi prodotti?</label>
               <select
                 value={location}
-                onChange={(e) => setLocation(e.target.value as (typeof LOCATIONS)[number])}
+                onChange={(e) => setLocation(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               >
-                {LOCATIONS.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {LOCATION_LABELS[loc]}
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.name}>
+                    {loc.name}
                   </option>
                 ))}
               </select>

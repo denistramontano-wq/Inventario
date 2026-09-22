@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { LOCATIONS, LOCATION_LABELS, UNITS, type InventoryItemWithProduct, type InventoryMovement } from '../lib/types'
+import { UNITS, type InventoryItemWithProduct, type InventoryMovement } from '../lib/types'
 import { CURRENCIES, formatMoney } from '../lib/currency'
 import { uploadProductImage } from '../lib/productImage'
+import { useCatalog } from '../contexts/CatalogContext'
 
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { locations, categories } = useCatalog()
 
   const [item, setItem] = useState<InventoryItemWithProduct | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,6 +49,11 @@ export function ItemDetail() {
     setItem({ ...item, [field]: value })
   }
 
+  function updateCategory(value: string) {
+    if (!item) return
+    setItem({ ...item, product: { ...item.product, category: value || null } })
+  }
+
   async function saveChanges() {
     if (!item) return
     setSaving(true)
@@ -62,6 +69,7 @@ export function ItemDetail() {
         low_stock_threshold: item.low_stock_threshold,
       })
       .eq('id', item.id)
+    await supabase.from('products').update({ category: item.product.category }).eq('id', item.product_id)
     setSaving(false)
   }
 
@@ -190,17 +198,33 @@ export function ItemDetail() {
           <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Posizione</label>
             <select
-              value={item.location ?? 'altro'}
+              value={item.location ?? ''}
               onChange={(e) => updateField('location', e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {LOCATION_LABELS[loc]}
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.name}>
+                  {loc.name}
                 </option>
               ))}
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">Categoria</label>
+          <select
+            value={item.product.category ?? ''}
+            onChange={(e) => updateCategory(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">— Nessuna —</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
