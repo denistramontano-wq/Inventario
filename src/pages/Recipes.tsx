@@ -22,12 +22,23 @@ function normalize(s: string) {
     .trim()
 }
 
+// Le istruzioni sono salvate come un unico paragrafo con le frasi separate
+// da un punto: le spezziamo in passi numerati, più facili da seguire ai
+// fornelli rispetto a un blocco di testo unico.
+function splitInstructionSteps(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export function Recipes() {
   const { currentHousehold } = useHousehold()
   const [recipes, setRecipes] = useState<RecipeWithIngredients[]>([])
   const [pantryNames, setPantryNames] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [onlyReady, setOnlyReady] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!currentHousehold) return
@@ -85,29 +96,71 @@ export function Recipes() {
         <p className="py-10 text-center text-sm text-gray-400">Nessuna ricetta trovata</p>
       ) : (
         <ul className="space-y-3">
-          {visibleMatches.map(({ recipe, have, missing, score }) => (
-            <li key={recipe.id} className="rounded-xl bg-white p-4 shadow-sm">
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <h2 className="font-medium text-gray-900">{recipe.name}</h2>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    missing.length === 0
-                      ? 'bg-green-100 text-green-700'
-                      : score >= 0.5
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-gray-100 text-gray-500'
-                  }`}
+          {visibleMatches.map(({ recipe, have, missing, score }) => {
+            const isExpanded = expandedId === recipe.id
+            const steps = recipe.instructions ? splitInstructionSteps(recipe.instructions) : []
+
+            return (
+              <li key={recipe.id} className="rounded-xl bg-white shadow-sm">
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : recipe.id)}
+                  className="w-full p-4 text-left"
                 >
-                  {missing.length === 0 ? 'Pronta!' : `${have.length}/${recipe.recipe_ingredients.length}`}
-                </span>
-              </div>
-              {recipe.description && <p className="mb-2 text-sm text-gray-500">{recipe.description}</p>}
-              {recipe.prep_minutes && <p className="mb-2 text-xs text-gray-400">⏱ {recipe.prep_minutes} min</p>}
-              {missing.length > 0 && (
-                <p className="text-xs text-orange-600">Manca: {missing.join(', ')}</p>
-              )}
-            </li>
-          ))}
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <h2 className="font-medium text-gray-900">{recipe.name}</h2>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        missing.length === 0
+                          ? 'bg-green-100 text-green-700'
+                          : score >= 0.5
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {missing.length === 0 ? 'Pronta!' : `${have.length}/${recipe.recipe_ingredients.length}`}
+                    </span>
+                  </div>
+                  {recipe.description && <p className="mb-2 text-sm text-gray-500">{recipe.description}</p>}
+                  {recipe.prep_minutes && <p className="mb-1 text-xs text-gray-400">⏱ {recipe.prep_minutes} min</p>}
+                  {missing.length > 0 && <p className="text-xs text-orange-600">Manca: {missing.join(', ')}</p>}
+                  <p className="mt-2 text-xs font-medium text-green-700">
+                    {isExpanded ? '▾ Nascondi preparazione' : '▸ Vedi ingredienti e preparazione'}
+                  </p>
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+                    <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Ingredienti</h3>
+                    <ul className="mb-4 space-y-1">
+                      {recipe.recipe_ingredients.map((ing) => {
+                        const isMissing = missing.includes(ing.name)
+                        return (
+                          <li key={ing.id} className={`text-sm ${isMissing ? 'text-orange-600' : 'text-gray-700'}`}>
+                            {isMissing ? '○' : '✓'} {ing.name}
+                            {ing.quantity ? ` — ${ing.quantity}${ing.unit ?? ''}` : ''}
+                          </li>
+                        )
+                      })}
+                    </ul>
+
+                    <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Preparazione</h3>
+                    {steps.length > 0 ? (
+                      <ol className="space-y-2">
+                        {steps.map((step, i) => (
+                          <li key={i} className="flex gap-2 text-sm text-gray-700">
+                            <span className="shrink-0 font-medium text-green-700">{i + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-sm text-gray-400">Istruzioni non disponibili per questa ricetta.</p>
+                    )}
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
