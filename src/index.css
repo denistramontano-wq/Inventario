@@ -14,11 +14,46 @@ body {
 
 /* iOS Safari zooma automaticamente la pagina quando il font di un campo è
    sotto i 16px: forziamo 16px sui campi per evitare lo zoom/scatto layout
-   quando l'utente tocca un input su schermo piccolo. */
+   quando l'utente tocca un input su schermo piccolo. !important perché le
+   utility Tailwind (es. text-sm) hanno specificità più alta di un semplice
+   selettore di elemento e altrimenti vincerebbero loro. */
 @media (max-width: 640px) {
   input,
   select,
   textarea {
-    font-size: 16px;
+    font-size: 16px !important;
   }
+}
+
+/* Uniforma l'aspetto nativo di input/select tra i browser: senza questo,
+   alcuni browser (es. Safari iOS) renderizzano il testo di un <select>
+   con un font/peso leggermente diverso da un <input>, anche a parità di
+   font-size dichiarato, dando un effetto di "campi non allineati". */
+input,
+select,
+textarea {
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1.1rem;
+  padding-right: 2.25rem !important;
+}
+
+/* Le frecce di incremento native sui campi numerici occupano spazio in modo
+   incoerente rispetto agli altri campi: le nascondiamo per un allineamento
+   visivo uniforme (il valore resta comunque modificabile digitando). */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
 }
