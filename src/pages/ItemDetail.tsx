@@ -126,7 +126,7 @@ export function ItemDetail() {
 
       <div className="space-y-3 rounded-xl bg-white p-4 shadow-sm">
         <div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Unità</label>
             <select
               value={item.unit}
@@ -140,7 +140,7 @@ export function ItemDetail() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Posizione</label>
             <select
               value={item.location ?? 'altro'}
@@ -156,8 +156,8 @@ export function ItemDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Scadenza</label>
             <input
               type="date"
@@ -166,7 +166,7 @@ export function ItemDetail() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Prezzo (€)</label>
             <input
               type="number"

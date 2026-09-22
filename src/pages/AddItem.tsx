@@ -203,7 +203,7 @@ export function AddItem() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Quantità</label>
             <input
               type="number"
@@ -214,7 +214,7 @@ export function AddItem() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Unità</label>
             <select
               value={unit}
@@ -245,8 +245,8 @@ export function AddItem() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Scadenza</label>
             <input
               type="date"
@@ -255,7 +255,7 @@ export function AddItem() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-gray-600">Prezzo (€)</label>
             <input
               type="number"
