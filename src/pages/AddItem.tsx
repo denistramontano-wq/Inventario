@@ -38,6 +38,10 @@ export function AddItem() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // true finché non troviamo un prodotto già esistente (nel database o su
+  // OpenFoodFacts): finché resta true, salvare crea una riga nuova nel
+  // catalogo prodotti condiviso, invece di riusarne una esistente.
+  const [isNewProduct, setIsNewProduct] = useState(true)
 
   async function handleBarcodeDetected(code: string) {
     setScanning(false)
@@ -54,6 +58,7 @@ export function AddItem() {
         setUnit((existing.data.unit as (typeof UNITS)[number]) ?? 'pz')
         setNutrition(existing.data.nutrition)
         setSource(existing.data.source as 'openfoodfacts' | 'manual')
+        setIsNewProduct(false)
       } else {
         const off = await lookupBarcode(code)
         if (off) {
@@ -63,13 +68,18 @@ export function AddItem() {
           setUnit(off.unit)
           setNutrition(off.nutrition as Json)
           setSource('openfoodfacts')
+          setIsNewProduct(false)
         } else {
-          setLookupError('Prodotto non trovato. Inserisci i dati manualmente.')
+          setLookupError(
+            'Non è nel database di prodotti né su OpenFoodFacts. Compila i campi qui sotto per crearlo: verrà aggiunto al database così la prossima volta lo riconosco subito.',
+          )
           setSource('manual')
+          setIsNewProduct(true)
         }
       }
     } catch {
-      setLookupError('Errore durante la ricerca del prodotto. Inserisci i dati manualmente.')
+      setLookupError('Errore durante la ricerca del prodotto. Puoi comunque compilare i campi a mano qui sotto.')
+      setIsNewProduct(true)
     } finally {
       setLookingUp(false)
     }
@@ -107,21 +117,35 @@ export function AddItem() {
         if (productError) throw productError
         productId = product.id
       } else {
-        const { data: product, error: productError } = await supabase
+        // Senza barcode non c'è un vincolo univoco su cui fare upsert: prima
+        // controlliamo se esiste già un prodotto con lo stesso nome, per non
+        // riempire il database di doppioni ogni volta che si aggiunge a mano.
+        const existingByName = await supabase
           .from('products')
-          .insert({
-            barcode: null,
-            name: name.trim(),
-            brand: brand.trim() || null,
-            image_url: imageUrl,
-            unit,
-            nutrition: nutrition ?? null,
-            source,
-          })
           .select('id')
-          .single()
-        if (productError) throw productError
-        productId = product.id
+          .ilike('name', name.trim())
+          .limit(1)
+          .maybeSingle()
+
+        if (existingByName.data) {
+          productId = existingByName.data.id
+        } else {
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .insert({
+              barcode: null,
+              name: name.trim(),
+              brand: brand.trim() || null,
+              image_url: imageUrl,
+              unit,
+              nutrition: nutrition ?? null,
+              source,
+            })
+            .select('id')
+            .single()
+          if (productError) throw productError
+          productId = product.id
+        }
       }
 
       const { error: itemError } = await supabase.from('inventory_items').insert({
@@ -176,7 +200,16 @@ export function AddItem() {
       </Link>
 
       {lookingUp && <p className="mb-3 text-sm text-gray-500">Ricerca prodotto...</p>}
-      {lookupError && <p className="mb-3 text-sm text-orange-600">{lookupError}</p>}
+      {lookupError && (
+        <div className="mb-4 rounded-xl bg-orange-50 p-3 text-sm text-orange-800">
+          <p className="mb-0.5 font-medium">🆕 Nuovo prodotto</p>
+          <p>{lookupError}</p>
+        </div>
+      )}
+
+      {!lookingUp && !lookupError && (
+        <p className="mb-3 text-center text-xs text-gray-400">— oppure compila i campi qui sotto a mano —</p>
+      )}
 
       {scanning && (
         <Suspense fallback={null}>
@@ -306,7 +339,11 @@ export function AddItem() {
           disabled={saving}
           className="w-full rounded-lg bg-green-600 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
         >
-          {saving ? 'Salvataggio...' : 'Salva in inventario'}
+          {saving
+            ? 'Salvataggio...'
+            : isNewProduct && name.trim()
+              ? '➕ Crea prodotto e aggiungi all\'inventario'
+              : 'Salva in inventario'}
         </button>
       </form>
     </div>
