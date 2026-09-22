@@ -367,6 +367,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_household: {
+        Args: { household_name: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "households"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_household_member: { Args: { hid: string }; Returns: boolean }
       redeem_household_invite: {
         Args: { invite_code: string }

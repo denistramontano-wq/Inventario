@@ -58,7 +58,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   }
 
   async function createHousehold(name: string) {
-    const { data, error } = await supabase.from('households').insert({ name }).select().single()
+    const { data, error } = await supabase.rpc('create_household', { household_name: name })
     if (error) return { error: error.message }
     await refresh()
     if (data) setCurrentHouseholdId(data.id)
