@@ -11,6 +11,7 @@ interface HouseholdContextValue {
   createHousehold: (name: string) => Promise<{ error: string | null }>
   joinHousehold: (code: string) => Promise<{ error: string | null }>
   createInviteCode: () => Promise<{ code: string | null; error: string | null }>
+  updateDefaultCurrency: (currency: string) => Promise<{ error: string | null }>
   refresh: () => Promise<void>
 }
 
@@ -101,6 +102,17 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     return { code: null, error: 'Impossibile generare un codice invito univoco, riprova' }
   }
 
+  async function updateDefaultCurrency(currency: string) {
+    if (!currentHouseholdId) return { error: 'Nessun nucleo familiare selezionato' }
+    const { error } = await supabase
+      .from('households')
+      .update({ default_currency: currency })
+      .eq('id', currentHouseholdId)
+    if (error) return { error: error.message }
+    await refresh()
+    return { error: null }
+  }
+
   const currentHousehold = households.find((h) => h.id === currentHouseholdId) ?? null
 
   return (
@@ -113,6 +125,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         createHousehold,
         joinHousehold,
         createInviteCode,
+        updateDefaultCurrency,
         refresh,
       }}
     >

@@ -5,6 +5,7 @@ import { useHousehold } from '../contexts/HouseholdContext'
 import { useAuth } from '../contexts/AuthContext'
 import { parseReceiptText } from '../lib/receiptParser'
 import { LOCATIONS, LOCATION_LABELS } from '../lib/types'
+import { CURRENCIES, formatMoney } from '../lib/currency'
 
 interface ReviewItem {
   id: string
@@ -27,6 +28,7 @@ export function ReceiptScan() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [items, setItems] = useState<ReviewItem[]>([])
   const [location, setLocation] = useState<(typeof LOCATIONS)[number]>('dispensa')
+  const [currency, setCurrency] = useState(currentHousehold?.default_currency ?? 'EUR')
   const [error, setError] = useState<string | null>(null)
 
   async function handleFile(file: File) {
@@ -122,6 +124,7 @@ export function ReceiptScan() {
           unit: 'pz',
           location,
           price,
+          currency,
           added_by: user?.id ?? null,
         })
         if (itemError) throw itemError
@@ -133,6 +136,7 @@ export function ReceiptScan() {
           quantity,
           unit: 'pz',
           price,
+          currency,
           created_by: user?.id ?? null,
         })
       }
@@ -198,19 +202,35 @@ export function ReceiptScan() {
 
       {(status === 'review' || status === 'saving') && (
         <>
-          <div className="mb-3">
-            <label className="mb-1 block text-xs font-medium text-gray-600">Dove metti questi prodotti?</label>
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value as (typeof LOCATIONS)[number])}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {LOCATION_LABELS[loc]}
-                </option>
-              ))}
-            </select>
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs font-medium text-gray-600">Dove metti questi prodotti?</label>
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value as (typeof LOCATIONS)[number])}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              >
+                {LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {LOCATION_LABELS[loc]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs font-medium text-gray-600">Valuta dello scontrino</label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.symbol} {c.code}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <ul className="space-y-2">
@@ -242,7 +262,7 @@ export function ReceiptScan() {
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="€"
+                  placeholder="0.00"
                   className="w-16 shrink-0 rounded-lg border border-gray-300 px-1 py-1.5 text-sm"
                 />
                 <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-500">
@@ -261,7 +281,7 @@ export function ReceiptScan() {
 
           <div className="mt-4 flex items-center justify-between rounded-xl bg-white p-4 shadow-sm">
             <span className="text-sm text-gray-500">Totale selezionato</span>
-            <span className="text-lg font-semibold text-gray-900">€{total.toFixed(2)}</span>
+            <span className="text-lg font-semibold text-gray-900">{formatMoney(total, currency)}</span>
           </div>
 
           <button

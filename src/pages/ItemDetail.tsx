@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { LOCATIONS, LOCATION_LABELS, UNITS, type InventoryItemWithProduct } from '../lib/types'
+import { CURRENCIES } from '../lib/currency'
 
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>()
@@ -42,6 +43,7 @@ export function ItemDetail() {
         location: item.location,
         expiry_date: item.expiry_date,
         price: item.price,
+        currency: item.currency,
         low_stock_threshold: item.low_stock_threshold,
       })
       .eq('id', item.id)
@@ -56,6 +58,8 @@ export function ItemDetail() {
       type,
       quantity,
       unit: item.unit,
+      price: item.price,
+      currency: item.currency,
       created_by: user?.id ?? null,
     })
   }
@@ -167,14 +171,27 @@ export function ItemDetail() {
             />
           </div>
           <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-gray-600">Prezzo (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={item.price ?? ''}
-              onChange={(e) => updateField('price', e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
+            <label className="mb-1 block text-xs font-medium text-gray-600">Prezzo</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                step="0.01"
+                value={item.price ?? ''}
+                onChange={(e) => updateField('price', e.target.value ? Number(e.target.value) : null)}
+                className="w-full min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              <select
+                value={item.currency}
+                onChange={(e) => updateField('currency', e.target.value)}
+                className="w-24 shrink-0 rounded-lg border border-gray-300 px-2 py-2 text-sm"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

@@ -82,18 +82,21 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          default_currency: string
           id: string
           name: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          default_currency?: string
           id?: string
           name: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          default_currency?: string
           id?: string
           name?: string
         }
@@ -103,6 +106,7 @@ export type Database = {
         Row: {
           added_by: string | null
           created_at: string
+          currency: string
           expiry_date: string | null
           household_id: string
           id: string
@@ -117,6 +121,7 @@ export type Database = {
         Insert: {
           added_by?: string | null
           created_at?: string
+          currency?: string
           expiry_date?: string | null
           household_id: string
           id?: string
@@ -131,6 +136,7 @@ export type Database = {
         Update: {
           added_by?: string | null
           created_at?: string
+          currency?: string
           expiry_date?: string | null
           household_id?: string
           id?: string
@@ -163,6 +169,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          currency: string
           household_id: string
           id: string
           price: number | null
@@ -174,6 +181,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          currency?: string
           household_id: string
           id?: string
           price?: number | null
@@ -185,6 +193,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          currency?: string
           household_id?: string
           id?: string
           price?: number | null
@@ -372,6 +381,7 @@ export type Database = {
         Returns: {
           created_at: string
           created_by: string | null
+          default_currency: string
           id: string
           name: string
         }

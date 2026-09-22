@@ -1,18 +1,27 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useHousehold } from '../contexts/HouseholdContext'
+import { CURRENCIES } from '../lib/currency'
 
 export function Settings() {
   const { user, signOut } = useAuth()
-  const { currentHousehold, households, setCurrentHouseholdId, createInviteCode } = useHousehold()
+  const { currentHousehold, households, setCurrentHouseholdId, createInviteCode, updateDefaultCurrency } =
+    useHousehold()
   const [invite, setInvite] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [savingCurrency, setSavingCurrency] = useState(false)
 
   async function handleInvite() {
     setError(null)
     const result = await createInviteCode()
     if (result.error) setError(result.error)
     else setInvite(result.code)
+  }
+
+  async function handleCurrencyChange(currency: string) {
+    setSavingCurrency(true)
+    await updateDefaultCurrency(currency)
+    setSavingCurrency(false)
   }
 
   return (
@@ -40,6 +49,26 @@ export function Settings() {
           </select>
         </div>
       )}
+
+      <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
+        <p className="mb-2 text-xs text-gray-500">Valuta preferita</p>
+        <select
+          value={currentHousehold?.default_currency ?? 'EUR'}
+          onChange={(e) => handleCurrencyChange(e.target.value)}
+          disabled={savingCurrency}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.symbol} {c.label} ({c.code})
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-400">
+          Usata come predefinita quando aggiungi un prodotto — puoi comunque scegliere una valuta diversa per ogni
+          singolo articolo.
+        </p>
+      </div>
 
       <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
         <p className="mb-2 text-xs text-gray-500">Invita qualcuno nel nucleo "{currentHousehold?.name}"</p>
