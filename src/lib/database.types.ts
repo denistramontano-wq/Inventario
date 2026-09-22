@@ -85,6 +85,7 @@ export type Database = {
           default_currency: string
           id: string
           name: string
+          stats_reset_at: string | null
         }
         Insert: {
           created_at?: string
@@ -92,6 +93,7 @@ export type Database = {
           default_currency?: string
           id?: string
           name: string
+          stats_reset_at?: string | null
         }
         Update: {
           created_at?: string
@@ -99,6 +101,7 @@ export type Database = {
           default_currency?: string
           id?: string
           name?: string
+          stats_reset_at?: string | null
         }
         Relationships: []
       }
@@ -384,6 +387,7 @@ export type Database = {
           default_currency: string
           id: string
           name: string
+          stats_reset_at: string | null
         }
         SetofOptions: {
           from: "*"

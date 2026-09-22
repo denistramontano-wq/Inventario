@@ -28,7 +28,9 @@ export function Expenses() {
 
   useEffect(() => {
     if (!currentHousehold) return
-    const since = startOfMonth(2).toISOString()
+    const lookback = startOfMonth(2)
+    const resetAt = currentHousehold.stats_reset_at ? new Date(currentHousehold.stats_reset_at) : null
+    const since = (resetAt && resetAt > lookback ? resetAt : lookback).toISOString()
     supabase
       .from('inventory_movements')
       .select('*, product:products(*)')
@@ -95,7 +97,18 @@ export function Expenses() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-6">
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Statistiche spesa</h1>
+      <h1 className="mb-1 text-xl font-semibold text-gray-900">Statistiche spesa</h1>
+      {currentHousehold.stats_reset_at && (
+        <p className="mb-4 text-xs text-gray-400">
+          Conteggi azzerati il{' '}
+          {new Date(currentHousehold.stats_reset_at).toLocaleDateString('it-IT', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })}
+        </p>
+      )}
+      {!currentHousehold.stats_reset_at && <div className="mb-4" />}
 
       <div className="mb-4 grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-white p-4 shadow-sm">

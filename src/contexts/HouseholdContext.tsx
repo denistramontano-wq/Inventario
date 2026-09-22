@@ -12,6 +12,7 @@ interface HouseholdContextValue {
   joinHousehold: (code: string) => Promise<{ error: string | null }>
   createInviteCode: () => Promise<{ code: string | null; error: string | null }>
   updateDefaultCurrency: (currency: string) => Promise<{ error: string | null }>
+  resetExpenseStats: () => Promise<{ error: string | null }>
   refresh: () => Promise<void>
 }
 
@@ -113,6 +114,17 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     return { error: null }
   }
 
+  async function resetExpenseStats() {
+    if (!currentHouseholdId) return { error: 'Nessun nucleo familiare selezionato' }
+    const { error } = await supabase
+      .from('households')
+      .update({ stats_reset_at: new Date().toISOString() })
+      .eq('id', currentHouseholdId)
+    if (error) return { error: error.message }
+    await refresh()
+    return { error: null }
+  }
+
   const currentHousehold = households.find((h) => h.id === currentHouseholdId) ?? null
 
   return (
@@ -126,6 +138,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         joinHousehold,
         createInviteCode,
         updateDefaultCurrency,
+        resetExpenseStats,
         refresh,
       }}
     >

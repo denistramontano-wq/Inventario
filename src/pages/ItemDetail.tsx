@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { LOCATIONS, LOCATION_LABELS, UNITS, type InventoryItemWithProduct } from '../lib/types'
-import { CURRENCIES } from '../lib/currency'
+import { LOCATIONS, LOCATION_LABELS, UNITS, type InventoryItemWithProduct, type InventoryMovement } from '../lib/types'
+import { CURRENCIES, formatMoney } from '../lib/currency'
 
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>()
@@ -13,6 +13,7 @@ export function ItemDetail() {
   const [item, setItem] = useState<InventoryItemWithProduct | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [purchaseHistory, setPurchaseHistory] = useState<InventoryMovement[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -22,8 +23,20 @@ export function ItemDetail() {
       .eq('id', id)
       .single()
       .then(({ data }) => {
-        setItem(data as unknown as InventoryItemWithProduct)
+        const loaded = data as unknown as InventoryItemWithProduct
+        setItem(loaded)
         setLoading(false)
+        if (loaded) {
+          supabase
+            .from('inventory_movements')
+            .select('*')
+            .eq('household_id', loaded.household_id)
+            .eq('product_id', loaded.product_id)
+            .eq('type', 'added')
+            .order('created_at', { ascending: false })
+            .limit(20)
+            .then(({ data: movements }) => setPurchaseHistory(movements ?? []))
+        }
       })
   }, [id])
 
@@ -214,6 +227,27 @@ export function ItemDetail() {
           {saving ? 'Salvataggio...' : 'Salva modifiche'}
         </button>
       </div>
+
+      {purchaseHistory.length > 0 && (
+        <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-medium text-gray-900">Storico acquisti</h2>
+          <ul className="divide-y divide-gray-100">
+            {purchaseHistory.map((m) => (
+              <li key={m.id} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-gray-500">
+                  {new Date(m.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                <span className="text-gray-600">
+                  {m.quantity} {m.unit}
+                </span>
+                <span className="font-medium text-gray-900">
+                  {m.price != null ? formatMoney(m.price, m.currency) : '—'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 flex gap-2">
         <button
