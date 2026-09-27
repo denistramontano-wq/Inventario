@@ -28,12 +28,6 @@ di spesa.
 - Nucleo familiare condiviso: più persone vedono e aggiornano lo stesso
   inventario tramite codice invito
 
-## App "Faccende di Casa"
-
-Nella cartella [`faccende/`](faccende/README.md) c'è una seconda PWA per le
-faccende domestiche, che usa lo stesso backend Supabase (stessi account e
-stesse case condivise).
-
 ## Sviluppo locale
 
 ```bash
